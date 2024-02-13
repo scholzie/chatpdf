@@ -1,10 +1,13 @@
-import { Pinecone, PineconeRecord,  } from '@pinecone-database/pinecone'
-import { downloadFromS3 } from './s3-server';
-import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
-import {Document, RecursiveCharacterTextSplitter} from '@pinecone-database/doc-splitter';
-import { getEmbeddings } from './embeddings';
-import md5 from 'md5';
-import { convertToASCII as convertToAscii } from './utils';
+import { Pinecone, PineconeRecord } from "@pinecone-database/pinecone";
+import { downloadFromS3 } from "./s3-server";
+import { PDFLoader } from "langchain/document_loaders/fs/pdf";
+import {
+  Document,
+  RecursiveCharacterTextSplitter,
+} from "@pinecone-database/doc-splitter";
+import { getEmbeddings } from "./embeddings";
+import md5 from "md5";
+import { convertToASCII as convertToAscii } from "./utils";
 
 let pinecone: Pinecone | null = null;
 
@@ -15,14 +18,14 @@ export const getPinecone = async () => {
     });
   }
   return pinecone;
-}
+};
 
 type PDFPage = {
   pageContent: string;
   metadata: {
     loc: { pageNumber: number };
   };
-}
+};
 
 export async function loadS3IntoPinecone(fileKey: string) {
   // 1. Obtain file from S3 and load text
@@ -39,17 +42,15 @@ export async function loadS3IntoPinecone(fileKey: string) {
   const pages = (await loader.load()) as PDFPage[];
 
   // 2. Split and segment text
-  const docs = await Promise.all(
-    pages.map(prepareDocument)
-  );
+  const docs = await Promise.all(pages.map(prepareDocument));
 
   // 3. Vectorize and embed
   const vectors = await Promise.all(docs.flat().map(embedDocument));
-  
+
   // 4. Load into Pinecone
   const client = getPinecone();
   const pcIndex = (await client).Index(process.env.PINECONE_INDEX_NAME!);
-  
+
   console.log(`Upserting ${vectors.length} vectors into Pinecone`);
   const ns = pcIndex.namespace(convertToAscii(fileKey));
   console.log(`Namespace: ${ns.toString()}`);
@@ -71,7 +72,6 @@ async function embedDocument(doc: Document) {
         pageNumber: doc.metadata.pageNumber,
       },
     } as PineconeRecord;
-
   } catch (error) {
     console.error(`Error embedding document: ${error}`);
     throw error;
@@ -85,25 +85,23 @@ export async function truncateStringByBytes(str: string, length: number) {
     return str;
   }
   const truncatedBytes = bytes.slice(0, length);
-  return new TextDecoder('utf-8').decode(truncatedBytes);
+  return new TextDecoder("utf-8").decode(truncatedBytes);
 }
 
 export async function prepareDocument(page: PDFPage) {
-  let {pageContent, metadata} = page;
+  let { pageContent, metadata } = page;
   pageContent = pageContent.replace(/(\r\n|\n|\r)/gm, " ");
 
   const splitter = new RecursiveCharacterTextSplitter();
   const docs = await splitter.splitDocuments([
     new Document({
-      pageContent, 
+      pageContent,
       metadata: {
         pageNumber: metadata.loc.pageNumber,
-        text: await truncateStringByBytes(pageContent, 36000)
-      }
-
-    })
+        text: await truncateStringByBytes(pageContent, 36000),
+      },
+    }),
   ]);
 
   return docs;
-
 }

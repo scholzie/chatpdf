@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import {auth} from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
 import { loadS3IntoPinecone } from "@/lib/pinecone";
 import { db } from "@/lib/db";
-import { chatsSchema } from "@/lib/db/schema";
+import { chats } from "@/lib/db/schema";
 import { getS3Url } from "@/lib/s3";
 
 // /api/create-chat
 export async function POST(req: Request, res: Response) {
-
   const { userId } = await auth();
   if (!userId) {
     toast.error("You must be logged in to create a chat");
@@ -20,20 +19,24 @@ export async function POST(req: Request, res: Response) {
     const { fileKey, fileName } = body;
     console.log("fkey, fname:", fileKey, fileName);
     await loadS3IntoPinecone(fileKey);
-    const chatId = await db.insert(chatsSchema)
+    const chatId = await db
+      .insert(chats)
       .values({
         userId,
         fileKey,
         pdfName: fileName,
-        pdfUrl: getS3Url(fileKey), 
+        pdfUrl: getS3Url(fileKey),
       })
       .returning({
-        insertedId: chatsSchema.id,
+        insertedId: chats.id,
       });
 
-    return NextResponse.json({ chatId: chatId[0].insertedId, }, { status: 200 });
+    return NextResponse.json({ chatId: chatId[0].insertedId }, { status: 200 });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

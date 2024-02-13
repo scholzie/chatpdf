@@ -21,20 +21,21 @@ export default async function Home() {
             {/* Chats button */}
             {isAuth && <Button>Go to chats</Button>}
           </div>
-          <p className="max-w-xl mt-2 text-lg text-slate">
-            Join millions of students, scientists, researchers, and professionals. 
-            Ask questions about any document and get instant answers using the power of AI.
+          <p className="max-w-xl mt-2 text-lg text-slate-600">
+            Join millions of students, scientists, researchers, and
+            professionals. Ask questions about any document and get instant
+            answers using the power of AI.
           </p>
 
           <div className="w-full mt-4">
             {/* file upload */}
             {isAuth ? (
               <FileUpload />
-            ): (
+            ) : (
               <Link href="/sign-in">
                 <Button>
                   Sign in to get started!
-                  <LogIn className="w-5 h-5 ml-2"/>
+                  <LogIn className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
             )}
