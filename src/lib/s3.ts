@@ -27,7 +27,7 @@ export async function uploadToS3( file: File ) : Promise<{fileKey: string, fileN
         (err: any, data: PutObjectOutput | undefined) => {
           return resolve({
             fileKey,
-            fileName: file.name 
+            fileName: file.name,
           });
         }
       );

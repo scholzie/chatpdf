@@ -6,7 +6,7 @@ export const userSystemEnum = pgEnum('user_system_enum', [
   'user',
 ])
 
-export const chats = pgTable('chats', {
+export const chatsSchema = pgTable('chats', {
   id: serial('id').primaryKey(),
   pdfName: text('pdf_name').notNull(),
   pdfUrl: text('pdf_url').notNull(),
@@ -15,9 +15,9 @@ export const chats = pgTable('chats', {
   fileKey: text('file_key').notNull(),
 });
 
-export const messages = pgTable('messages', {
+export const messagesSchema = pgTable('messages', {
   id: serial('id').primaryKey(),
-  chatId: integer('chat_id').references(() => chats.id).notNull(),
+  chatId: integer('chat_id').references(() => chatsSchema.id).notNull(),
   content: text('content').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   role: userSystemEnum('role').notNull(),

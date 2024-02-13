@@ -1,7 +1,10 @@
-import { Pinecone } from '@pinecone-database/pinecone'
+import { Pinecone, PineconeRecord,  } from '@pinecone-database/pinecone'
 import { downloadFromS3 } from './s3-server';
 import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
 import {Document, RecursiveCharacterTextSplitter} from '@pinecone-database/doc-splitter';
+import { getEmbeddings } from './embeddings';
+import md5 from 'md5';
+import { convertToASCII as convertToAscii } from './utils';
 
 let pinecone: Pinecone | null = null;
 
@@ -40,8 +43,39 @@ export async function loadS3IntoPinecone(fileKey: string) {
     pages.map(prepareDocument)
   );
 
-  // 3. Load vectors into Pinecone
-  return pages;
+  // 3. Vectorize and embed
+  const vectors = await Promise.all(docs.flat().map(embedDocument));
+  
+  // 4. Load into Pinecone
+  const client = getPinecone();
+  const pcIndex = (await client).Index(process.env.PINECONE_INDEX_NAME!);
+  
+  console.log(`Upserting ${vectors.length} vectors into Pinecone`);
+  const ns = pcIndex.namespace(convertToAscii(fileKey));
+  console.log(`Namespace: ${ns.toString()}`);
+  await ns.upsert(vectors);
+
+  console.log(`Upserted ${vectors.length} vectors into Pinecone`);
+  return docs[0];
+}
+
+async function embedDocument(doc: Document) {
+  try {
+    const embeddings = await getEmbeddings(doc.pageContent);
+    const hash = md5(doc.pageContent);
+    return {
+      id: hash,
+      values: embeddings,
+      metadata: {
+        text: doc.metadata.text,
+        pageNumber: doc.metadata.pageNumber,
+      },
+    } as PineconeRecord;
+
+  } catch (error) {
+    console.error(`Error embedding document: ${error}`);
+    throw error;
+  }
 }
 
 export async function truncateStringByBytes(str: string, length: number) {
