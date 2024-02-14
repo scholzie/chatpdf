@@ -26,6 +26,7 @@
     "clsx": "^2.1.0",
     "dotenv": "^16.4.1",
     "drizzle-orm": "^0.29.3",
+    "fs": "^0.0.1-security",
     "langchain": "^0.1.17",
     "lucide-react": "^0.323.0",
     "md5": "^2.3.0",
@@ -54,5 +55,10 @@
     "prettier": "3.2.5",
     "tailwindcss": "^3.3.0",
     "typescript": "^5"
+  },
+  "browser": {
+    "fs": false,
+    "os": false,
+    "path": false
   }
 }

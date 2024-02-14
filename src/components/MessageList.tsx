@@ -25,6 +25,7 @@ const MessageList = (props: Props) => {
       </div>
     );
   }
+
   return (
     <div className="flex flex-col gap-2 px-4">
       {messages.map((message) => {

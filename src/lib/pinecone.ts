@@ -51,9 +51,10 @@ export async function loadS3IntoPinecone(fileKey: string) {
   const client = getPinecone();
   const pcIndex = (await client).Index(process.env.PINECONE_INDEX_NAME!);
 
+  console.log(vectors);
   console.log(`Upserting ${vectors.length} vectors into Pinecone`);
   const ns = pcIndex.namespace(convertToAscii(fileKey));
-  console.log(`Namespace: ${ns.toString()}`);
+  console.log(`Namespace: ${convertToAscii(fileKey)}`);
   await ns.upsert(vectors);
 
   console.log(`Upserted ${vectors.length} vectors into Pinecone`);

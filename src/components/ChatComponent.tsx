@@ -1,7 +1,6 @@
 "use client";
-import { DrizzleMessage } from "@/lib/db/schema";
 import React from "react";
-import { useChat } from "ai/react";
+import { Message, useChat } from "ai/react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Send } from "lucide-react";
@@ -19,7 +18,7 @@ const ChatComponent = (props: Props) => {
   const { data, isLoading } = useQuery({
     queryKey: ["chat", chatId],
     queryFn: async () => {
-      const res = await axios.post("/api/get-messages", {
+      const res = await axios.post<Message[]>("/api/get-messages", {
         chatId,
       });
       return res.data;
@@ -28,9 +27,21 @@ const ChatComponent = (props: Props) => {
 
   const { input, handleInputChange, handleSubmit, messages } = useChat({
     api: "/api/chat",
-    body: { chatId },
+    body: {
+      chatId,
+    },
     initialMessages: data || [],
   });
+
+  React.useEffect(() => {
+    const messageContainer = document.getElementById("message-container");
+    if (messageContainer) {
+      messageContainer.scrollTo({
+        top: messageContainer.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages]);
 
   return (
     <div

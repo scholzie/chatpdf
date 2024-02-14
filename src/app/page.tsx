@@ -1,13 +1,28 @@
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
+import { db } from "@/lib/db";
+import { chats } from "@/lib/db/schema";
 import { UserButton, auth } from "@clerk/nextjs";
-import { LogIn, LogInIcon } from "lucide-react";
+import { ChevronRightSquare, LogIn, LogInIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { eq } from "drizzle-orm";
 
 export default async function Home() {
   const { userId } = await auth();
   const isAuth = !!userId;
+  let firstChat;
+
+  if (userId) {
+    firstChat = await db
+      .select()
+      .from(chats)
+      .where(eq(chats.userId, userId))
+      .limit(1);
+
+    if (firstChat) firstChat = firstChat[0];
+  }
+
   return (
     <div className="w-screen min-h-screen bg-gradient-to-r from-rose-100 to-teal-100">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -19,7 +34,19 @@ export default async function Home() {
 
           <div className="flex mt-2">
             {/* Chats button */}
-            {isAuth && <Button>Go to chats</Button>}
+            {isAuth && firstChat && (
+              <>
+                <Link href={`/chat/${firstChat.id}`}>
+                  <Button className="cursor-pointer">
+                    Go to chats <ChevronRightSquare className="ml-2" />
+                  </Button>
+                </Link>
+                <div className="ml-3">
+                  {/* TODO: implement */}
+                  {/* <SubscriptionButton /> */}
+                </div>
+              </>
+            )}
           </div>
           <p className="max-w-xl mt-2 text-lg text-slate-600">
             Join millions of students, scientists, researchers, and
